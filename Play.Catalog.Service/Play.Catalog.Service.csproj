@@ -9,6 +9,7 @@
     <ItemGroup>
         <!-- Keeps native OpenAPI document generation -->
         <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.5" />
+        <PackageReference Include="MongoDB.Driver" Version="3.7.0" />
 
         <!-- Adds Swagger UI (and optional full Swashbuckle features) -->
         <PackageReference Include="Swashbuckle.AspNetCore" Version="10.1.5" />
