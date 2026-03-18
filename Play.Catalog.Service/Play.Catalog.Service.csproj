@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+    <PropertyGroup>
+        <TargetFramework>net10.0</TargetFramework>
+        <Nullable>enable</Nullable>
+        <ImplicitUsings>enable</ImplicitUsings>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <!-- Keeps native OpenAPI document generation -->
+        <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.5" />
+
+        <!-- Adds Swagger UI (and optional full Swashbuckle features) -->
+        <PackageReference Include="Swashbuckle.AspNetCore" Version="10.1.5" />
+        <!-- 
+          Alternative (lighter, only UI): 
+          <PackageReference Include="Swashbuckle.AspNetCore.SwaggerUI" Version="10.1.5" />
+        -->
+    </ItemGroup>
+
+</Project>
