@@ -1,4 +1,19 @@
+using MongoDB.Bson;
+using MongoDB.Bson.Serialization;
+using MongoDB.Bson.Serialization.Serializers;
+
+// ────────────────────────────────────────────────
+// Register a default Guid serializer (helps in some edge cases like ObjectSerializer internals)
+BsonSerializer.RegisterSerializer(new GuidSerializer(GuidRepresentation.Standard));
+// ────────────────────────────────────────────────
+
 var builder = WebApplication.CreateBuilder(args);
+
+// Add services (what was in ConfigureServices)
+builder.Services.AddControllers(options =>
+{
+    options.SuppressAsyncSuffixInActionNames = false;
+});
 
 // Add services to the container.
 builder.Services.AddControllers();
