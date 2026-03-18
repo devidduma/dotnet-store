@@ -1,6 +1,9 @@
 using MongoDB.Bson;
 using MongoDB.Bson.Serialization;
 using MongoDB.Bson.Serialization.Serializers;
+using MongoDB.Driver;
+using Play.Catalog.Service.Repositories;
+using Play.Catalog.Service.Settings;
 
 // ────────────────────────────────────────────────
 // Register a default Guid serializer (helps in some edge cases like ObjectSerializer internals)
@@ -8,6 +11,25 @@ BsonSerializer.RegisterSerializer(new GuidSerializer(GuidRepresentation.Standard
 // ────────────────────────────────────────────────
 
 var builder = WebApplication.CreateBuilder(args);
+
+// ────────────────────────────────────────────────
+// Bind the "ServiceSettings" section → strongly-typed options
+builder.Services.Configure<ServiceSettings>(
+    builder.Configuration.GetSection(nameof(ServiceSettings))
+);
+// ────────────────────────────────────────────────
+
+builder.Services.AddSingleton(serviceProvider =>
+{
+    var mongoDbSettings = builder.Configuration.GetSection(nameof(MongoDbSettings)).Get<MongoDbSettings>();
+    var mongoClient = new MongoClient(mongoDbSettings.ConnectionString);
+    var serviceSettings = builder.Configuration
+        .GetSection(nameof(ServiceSettings))
+        .Get<ServiceSettings>();
+    return mongoClient.GetDatabase(serviceSettings.ServiceName);
+});
+
+builder.Services.AddSingleton<IItemsRepository, ItemsRepository>();
 
 // Add services (what was in ConfigureServices)
 builder.Services.AddControllers(options =>
