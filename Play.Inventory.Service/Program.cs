@@ -2,6 +2,8 @@ using Play.Common.MongoDB;
 using Play.Inventory.Service.Clients;
 using Play.Inventory.Service.Entities;
 using Polly;
+using Polly.Extensions.Http;
+using Polly.Timeout;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -15,11 +17,32 @@ builder.Services.AddControllers(options =>
     options.SuppressAsyncSuffixInActionNames = false;
 });
 
-//
+// Catalog microservice client url
 builder.Services.AddHttpClient<CatalogClient>(client =>
 {
     client.BaseAddress = new Uri("http://localhost:5160");
-}).AddPolicyHandler(Policy.TimeoutAsync<HttpResponseMessage>(TimeSpan.FromSeconds(1)));
+})
+.AddPolicyHandler((services, request) =>
+{
+    Random jitterer = new Random();
+    
+    return HttpPolicyExtensions
+        .HandleTransientHttpError()
+        .Or<TimeoutRejectedException>()
+        .WaitAndRetryAsync(
+            retryCount: 5,
+            sleepDurationProvider: retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt))
+                                                   + TimeSpan.FromMilliseconds(jitterer.Next(0, 1000)),
+            onRetry: (outcome, timeSpan, retryAttempt, context) =>
+            {
+                var logger = services.GetRequiredService<ILogger<CatalogClient>>();
+                logger.LogWarning(
+                    $"Delaying for {timeSpan.TotalSeconds} seconds, then making retry {retryAttempt}."
+                );
+            }
+        );
+})
+.AddPolicyHandler(Policy.TimeoutAsync<HttpResponseMessage>(TimeSpan.FromSeconds(1)));
 
 // Add services to the container.
 builder.Services.AddControllers();
