@@ -8,6 +8,8 @@
 
     <ItemGroup>
         <!-- Keeps native OpenAPI document generation -->
+        <PackageReference Include="MassTransit" Version="8.*" />
+        <PackageReference Include="MassTransit.RabbitMQ" Version="8.*" />
         <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.5" />
         <PackageReference Include="Play.Common" Version="1.0.0" />
 
@@ -17,6 +19,10 @@
           Alternative (lighter, only UI): 
           <PackageReference Include="Swashbuckle.AspNetCore.SwaggerUI" Version="10.1.5" />
         -->
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\Play.Catalog.Contracts\Play.Catalog.Contracts.csproj" />
     </ItemGroup>
 
 </Project>
