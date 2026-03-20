@@ -24,9 +24,13 @@ builder.Services.AddHttpClient<CatalogClient>(client =>
 })
 .AddPolicyHandler((services, request) =>
 {
+    var logger = services.GetRequiredService<ILogger<CatalogClient>>();
+
+    var timeoutPolicy = Policy.TimeoutAsync<HttpResponseMessage>(TimeSpan.FromSeconds(1));
+
     Random jitterer = new Random();
     
-    return HttpPolicyExtensions
+    var retryPolicy = HttpPolicyExtensions
         .HandleTransientHttpError()
         .Or<TimeoutRejectedException>()
         .WaitAndRetryAsync(
@@ -35,14 +39,34 @@ builder.Services.AddHttpClient<CatalogClient>(client =>
                                                    + TimeSpan.FromMilliseconds(jitterer.Next(0, 1000)),
             onRetry: (outcome, timeSpan, retryAttempt, context) =>
             {
-                var logger = services.GetRequiredService<ILogger<CatalogClient>>();
                 logger.LogWarning(
                     $"Delaying for {timeSpan.TotalSeconds} seconds, then making retry {retryAttempt}."
                 );
             }
         );
-})
-.AddPolicyHandler(Policy.TimeoutAsync<HttpResponseMessage>(TimeSpan.FromSeconds(1)));
+
+    var circuitBreakerPolicy = HttpPolicyExtensions
+        .HandleTransientHttpError()
+        .Or<TimeoutRejectedException>()
+        .CircuitBreakerAsync(
+            handledEventsAllowedBeforeBreaking: 3,
+            durationOfBreak: TimeSpan.FromSeconds(15),
+            onBreak: (outcome, timeSpan) =>
+            {
+                logger.LogWarning(
+                    $"Opening the circuit for {timeSpan.TotalSeconds} seconds."
+                );
+            },
+            onReset: () =>
+            {
+                logger.LogWarning(
+                    "Closing the circuit."
+                );
+            }
+        );
+
+    return Policy.WrapAsync(retryPolicy, circuitBreakerPolicy, timeoutPolicy);
+});
 
 // Add services to the container.
 builder.Services.AddControllers();
