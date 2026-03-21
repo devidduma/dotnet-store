@@ -22,6 +22,11 @@ namespace Play.Common.MassTransit
         
                     var serviceSettings = configuration.GetSection(nameof(ServiceSettings)).Get<ServiceSettings>();
                     configurator.ConfigureEndpoints(context, new KebabCaseEndpointNameFormatter(serviceSettings.ServiceName, false));
+                    
+                    configurator.UseMessageRetry(retryConfigurator =>
+                    {
+                        retryConfigurator.Interval(3, TimeSpan.FromSeconds(5));
+                    });
                 });
             });
             
