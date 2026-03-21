@@ -1,3 +1,4 @@
+using Play.Common.MassTransit;
 using Play.Common.MongoDB;
 using Play.Inventory.Service.Clients;
 using Play.Inventory.Service.Entities;
@@ -7,9 +8,11 @@ using Polly.Timeout;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add Mongo in services
+// Add Mongo and MassTransit in services
 builder.Services.AddMongo(builder.Configuration)
-    .AddMongoRepository<InventoryItem>("inventoryitems");
+    .AddMongoRepository<InventoryItem>("inventoryitems")
+    .AddMongoRepository<CatalogItem>("catalogitems")
+    .AddMassTransitWithRabbitMq(builder.Configuration);
 
 // Configure Suppress Async Suffix in services
 builder.Services.AddControllers(options =>
