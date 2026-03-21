@@ -1,27 +1,13 @@
-using MassTransit;
 using Play.Catalog.Service.Entities;
-using Play.Catalog.Service.Settings;
+using Play.Common.MassTransit;
 using Play.Common.MongoDB;
-using Play.Common.Settings;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add Mongo in services
+// Add Mongo and MassTransit in services
 builder.Services.AddMongo(builder.Configuration)
-    .AddMongoRepository<Item>("items");
-
-// Add MassTransit in services
-builder.Services.AddMassTransit(config =>
-{
-    config.UsingRabbitMq((context, configurator) =>
-    {
-        var rabbitMQSettings = builder.Configuration.GetSection(nameof(RabbitMQSettings)).Get<RabbitMQSettings>();
-        configurator.Host(rabbitMQSettings.Host);
-        
-        var serviceSettings = builder.Configuration.GetSection(nameof(ServiceSettings)).Get<ServiceSettings>();
-        configurator.ConfigureEndpoints(context, new KebabCaseEndpointNameFormatter(serviceSettings.ServiceName, false));
-    });
-});
+    .AddMongoRepository<Item>("items")
+    .AddMassTransitWithRabbitMq(builder.Configuration);
 
 // Configure Suppress Async Suffix in services
 builder.Services.AddControllers(options =>
